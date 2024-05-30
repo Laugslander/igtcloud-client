@@ -26,6 +26,7 @@ def cli():
                                                                                  case_sensitive=False))
 @click.option('--domain', default=None, help='Overwrites the environment setting')
 @click.option('--user', default=None, help='Username')
+@click.option('--password', default=None, help='Base64 encoded password')
 @click.option('--ext', default=None, help='filter on specific file extension (i.e.: \'.txt\')')
 @click.option(
     '--start',
@@ -60,7 +61,7 @@ def cli():
     type=click.Choice(['flat', 'hierarchical'], case_sensitive=False),
     help='Folder structure of the data to be downloaded.'
 )
-def download(target_folder, project, institute, environment, domain, user, ext, start, end, category,
+def download(target_folder, project, institute, environment, domain, user, password, ext, start, end, category,
              include_modified_date, project_files, debug, concurrent_studies, concurrent_files, folder_structure):
     """Download data from Philips Interventional Cloud.
 
@@ -79,7 +80,7 @@ def download(target_folder, project, institute, environment, domain, user, ext, 
         institute = None
 
     domain = _get_domain(domain, environment)
-    with smart_auth(domain, username=user) as auth:
+    with smart_auth(domain, username=user, password=password) as auth:
         set_auth(auth)
         logger.info(f"Using url: {auth.domain}")
 
@@ -111,12 +112,13 @@ def download(target_folder, project, institute, environment, domain, user, ext, 
                                                                                  case_sensitive=False))
 @click.option('--domain', default=None, help='Overwrites the environment setting')
 @click.option('--user', default=None, help='Username')
+@click.option('--password', default=None, help='Base64 encoded password')
 @click.option('--ext', default=None, help='filter on specific file extension (i.e.: \'.txt\')')
 @click.option('--start', default=None, help='start date (YYYY-MM-DD) of date range filter. Default value is 1900-01-01.')
 @click.option('--end', default=None, help='end date (YYYY-MM-DD) of date range filter. Default value is 9999-12-31.')
 @click.option('--debug', flag_value=True, help='Enable debug logging')
 @click.option('--files', flag_value=True, help='Output all files under patient studies')
-def csv(target_folder, project, institute, environment, domain, user, ext, start, end, debug, files):
+def csv(target_folder, project, institute, environment, domain, user, password, ext, start, end, debug, files):
     """List data from Philips Interventional Cloud in CSV file.
 
     This tool will export all studies/files from INSTITUTE (or all institutes) in project PROJECT to
@@ -134,7 +136,7 @@ def csv(target_folder, project, institute, environment, domain, user, ext, start
         institute = None
 
     domain = _get_domain(domain, environment)
-    with smart_auth(domain, username=user) as auth:
+    with smart_auth(domain, username=user, password=password) as auth:
         set_auth(auth)
         logger.info(f"Using url: {auth.domain}")
         list_project(project, target_folder, institute_name=institute, list_files=files,
@@ -160,6 +162,7 @@ def _get_domain(domain, environment):
                                                                                  case_sensitive=False))
 @click.option('--domain', default=None, help='Overwrites the environment setting')
 @click.option('--user', default=None, help='Username')
+@click.option('--password', default=None, help='Base64 encoded password')
 @click.option('--submit', flag_value=True, help='Set electronic record state to submitted state')
 @click.option('--debug', flag_value=True, help='Enable debug logging')
 @click.option('--concurrent-studies', type=int, default=None, help='Maximum number of concurrent studies upload')
@@ -176,7 +179,7 @@ def _get_domain(domain, environment):
     type=click.Choice(['annotations'], case_sensitive=False),
     help='Uploads annotation files'
 )
-def upload(local_folder, project, institute, environment, domain, user, submit, debug, concurrent_studies,
+def upload(local_folder, project, institute, environment, domain, user, password, submit, debug, concurrent_studies,
            concurrent_files, folder_structure, category):
     """Upload data to Philips Interventional Cloud.
 
@@ -198,7 +201,7 @@ def upload(local_folder, project, institute, environment, domain, user, submit, 
     if institute == "*":
         institute = None
 
-    with smart_auth(domain, username=user) as auth:
+    with smart_auth(domain, username=user, password=password) as auth:
         set_auth(auth)
         logger.info(f"Using url: {auth.domain}")
         upload_project(local_folder, project, institute, submit, concurrent_studies, concurrent_files, folder_structure, category)
@@ -207,8 +210,9 @@ def upload(local_folder, project, institute, environment, domain, user, submit, 
 @click.command(short_help="Login to Philips Interventional Cloud")
 @click.option('-d', '--domain', default=None, type=str)
 @click.option('-u', '--user', default=None, type=str)
+@click.option('-p', '--password', default=None, type=str, help='Base64 encoded password')
 @click.option('-s', '--service-file', default=None, type=str, help='Use a service certificate to perform login')
-def login(domain, user, service_file):
+def login(domain, user, password, service_file):
     from igtcloud.client.core.auth import AuthRefresher
     auth_refresher = AuthRefresher()
     key = None
@@ -216,7 +220,7 @@ def login(domain, user, service_file):
         user = user or os.path.splitext(os.path.basename(service_file))[0]
         with open(service_file) as fp:
             key = fp.read()
-    auth_refresher.start(domain=domain, username=user, key=key)
+    auth_refresher.start(domain=domain, username=user, password=password, key=key)
 
 
 @click.command('get-token', short_help="Get token for Philips Interventional Cloud")
