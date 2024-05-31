@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def smart_auth(domain, username=None, password=None, key=None, auto_refresh=True, auto_logout=True):
+def smart_auth(domain, username=None, encoded_password=None, key=None, auto_refresh=True, auto_logout=True):
     url = urlparse(domain)
     if not url.scheme:
         url = urlparse('https://' + domain)
@@ -43,7 +43,7 @@ def smart_auth(domain, username=None, password=None, key=None, auto_refresh=True
         if auth is None:
             with AuthRefresher(domain=domain,
                                username=username,
-                               password=password,
+                               encoded_password=encoded_password,
                                key=key,
                                auto_refresh=auto_refresh,
                                auto_logout=auto_logout) as auth:
@@ -273,7 +273,7 @@ class AuthRefresher:
 
         return json.loads(base64.b64decode(jwt_payload))
 
-    def _login(self, username=None, password=None, key=None):
+    def _login(self, username=None, encoded_password=None, key=None):
         if self._token_data is None or self._token_data.get('refresh_token') is None:
             logger.info("Login to IGT Cloud ({})".format(self._host))
 
@@ -295,10 +295,10 @@ class AuthRefresher:
             else:
                 username = username or os.environ.get('CLOUD_USERNAME') or input("Username: ")
 
-                if not password:
+                if not encoded_password:
                     password = getpass('{}@{}\'s password: '.format(username, self._host))
                 else:
-                    password = base64.b64decode(password).decode('utf-8')
+                    password = base64.b64decode(encoded_password).decode('utf-8')
 
                 try:
                     self._oauth_login(username, password)
@@ -372,7 +372,7 @@ class AuthRefresher:
             self._running = False
             logger.info("Stopped IGT Cloud authentication handler")
 
-    def start(self, domain=None, username=None, password=None, key=None, blocking=True, auto_refresh=True, auto_logout=True):
+    def start(self, domain=None, username=None, encoded_password=None, key=None, blocking=True, auto_refresh=True, auto_logout=True):
         self._setup_mmap()
         try:
             logger.info("Starting IGT Cloud authentication handler...")
@@ -388,7 +388,7 @@ class AuthRefresher:
             self._domain = url.geturl()
             self._host = url.netloc
 
-            self._login(username=username, password=password, key=key)
+            self._login(username=username, encoded_password=encoded_password, key=key)
 
             if auto_refresh:
                 self._rt.start()

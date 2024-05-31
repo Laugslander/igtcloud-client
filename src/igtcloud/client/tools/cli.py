@@ -80,7 +80,7 @@ def download(target_folder, project, institute, environment, domain, user, passw
         institute = None
 
     domain = _get_domain(domain, environment)
-    with smart_auth(domain, username=user, password=password) as auth:
+    with smart_auth(domain, username=user, encoded_password=password) as auth:
         set_auth(auth)
         logger.info(f"Using url: {auth.domain}")
 
@@ -136,7 +136,7 @@ def csv(target_folder, project, institute, environment, domain, user, password, 
         institute = None
 
     domain = _get_domain(domain, environment)
-    with smart_auth(domain, username=user, password=password) as auth:
+    with smart_auth(domain, username=user, encoded_password=password) as auth:
         set_auth(auth)
         logger.info(f"Using url: {auth.domain}")
         list_project(project, target_folder, institute_name=institute, list_files=files,
@@ -201,7 +201,7 @@ def upload(local_folder, project, institute, environment, domain, user, password
     if institute == "*":
         institute = None
 
-    with smart_auth(domain, username=user, password=password) as auth:
+    with smart_auth(domain, username=user, encoded_password=password) as auth:
         set_auth(auth)
         logger.info(f"Using url: {auth.domain}")
         upload_project(local_folder, project, institute, submit, concurrent_studies, concurrent_files, folder_structure, category)
@@ -220,7 +220,7 @@ def login(domain, user, password, service_file):
         user = user or os.path.splitext(os.path.basename(service_file))[0]
         with open(service_file) as fp:
             key = fp.read()
-    auth_refresher.start(domain=domain, username=user, password=password, key=key)
+    auth_refresher.start(domain=domain, username=user, encoded_password=password, key=key)
 
 
 @click.command('get-token', short_help="Get token for Philips Interventional Cloud")
